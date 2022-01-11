@@ -25,10 +25,11 @@ router.post(
             return res.status(400).json({ errors: errors.array() });
         }
         const { email } = req.body;
+      
         try {
             let user: IUser = await User.findOne({ email });
-    
-
+            let OTPValue =  generateOTP();
+            if(!user){
             const userFields = {
                 email: email,
             }
@@ -40,7 +41,7 @@ router.post(
             const payload = {
               email: user.email,
             };
-            let OTPValue =  generateOTP();
+         
             sendEmail(email,OTPValue);
             const OTPFields = {
                 emailVerify: OTPValue,
@@ -51,6 +52,14 @@ router.post(
              res.status(200).json({
             msg: "User created",
            })
+            }
+            else {
+                sendEmail(email,OTPValue);
+                await OTP.updateOne({email:email},{emailVerify:OTPValue});
+                res.status(200).json({
+                    msg: "User Already Exist and OTP sent",
+                })
+            }
         } catch (err) {
             console.error(err.message);
             res.status(500).send("Server Error");
