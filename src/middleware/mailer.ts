@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 
-export async function sendEmail(to: string) {
+export async function sendEmail(to: string,otp:number) {
     // Generate test SMTP service account from ethereal.email
     // Only needed if you don't have a real mail account for testing
     // let testAccount = await nodemailer.createTestAccount();
@@ -26,6 +26,7 @@ export async function sendEmail(to: string) {
       html: `
       <h1>Welcome</h1>
       <p>You have successfully signed up</p>
+      ${otp}
       `, // plain text body
     });
   

@@ -9,7 +9,10 @@ import { getStatus } from "../controllers/Status";
 import { getUserByEmail } from "../controllers/Status";
 var ObjectID = require('mongodb').ObjectID;
 
+import { generateOTP } from "../utils/generateOTP";
+
 const router: Router = Router();
+
 
 router.post(
     "/enter",[
@@ -36,7 +39,8 @@ router.post(
             const payload = {
               email: user.email,
             };
-           res.status(200).json({
+            sendEmail(email,generateOTP());
+             res.status(200).json({
             msg: "User created",
            })
         } catch (err) {
@@ -78,38 +82,26 @@ router.post(
 )
 
 router.post(
-    '/verify',
+    "/email-verify",
     [
-        check("email").isEmail(),
+       check("otp").isNumeric(),
     ],
     async (req: Request, res: Response) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        const { email } = req.body;
-        try {
-            let user: IUser = await User.findOne({ email });
-            if (!user) {
-                user = new User(email);
-              await user.save()
-            }
-            const payload = {
-                email: user.email,
-            };
-            sendEmail(email);
+        if("key" == req.body.otp){
             res.status(200).json({
-                user
-            });
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("Server Error");
+                msg: "Email verified"
+            })
+        }
+        else{
+            res.status(400).json({
+                msg: "Email not verified"
+            })
         }
     }
 )
 
 router.post(
-    "reverify",
+    "/resend",
     [
         check("email").isEmail(),
     ],
@@ -128,9 +120,9 @@ router.post(
             const payload = {
                 email: user.email,
             };
-            sendEmail(email);
+            sendEmail(email,generateOTP());
             res.status(200).json({
-                user
+                msg: "Email sent",
             });
         } catch (err) {
             console.error(err.message);
