@@ -5,6 +5,7 @@ import Request from "../types/Request";
 import User, { IUser } from "../models/User";
 import { sendEmail } from "../middleware/mailer";
 
+import OTP, {IOTP} from "../models/OTP";
 import { getStatus } from "../controllers/Status";
 import { getUserByEmail } from "../controllers/Status";
 var ObjectID = require('mongodb').ObjectID;
@@ -40,6 +41,7 @@ router.post(
               email: user.email,
             };
             sendEmail(email,generateOTP());
+            await OTP.create({user:user},{emailVerify:generateOTP()});
              res.status(200).json({
             msg: "User created",
            })
@@ -84,10 +86,18 @@ router.post(
 router.post(
     "/email-verify",
     [
+       check("email").isEmail(),
        check("otp").isNumeric(),
     ],
     async (req: Request, res: Response) => {
-        if("key" == req.body.otp){
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        const { email,otp } = req.body;
+        const OTPValue = await OTP.findOne({emailVerify:otp})
+        if(OTPValue == otp){
+            await OTP.updateOne({email:email},{emailVerify:true})
             res.status(200).json({
                 msg: "Email verified"
             })
