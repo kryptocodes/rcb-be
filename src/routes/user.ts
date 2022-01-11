@@ -40,8 +40,14 @@ router.post(
             const payload = {
               email: user.email,
             };
-            sendEmail(email,generateOTP());
-            await OTP.create({user:user},{emailVerify:generateOTP()});
+            let OTPValue =  generateOTP();
+            sendEmail(email,OTPValue);
+            const OTPFields = {
+                emailVerify: OTPValue,
+                user: user
+            }
+            const otp = new OTP(OTPFields);
+             await otp.save();
              res.status(200).json({
             msg: "User created",
            })
@@ -96,7 +102,8 @@ router.post(
         }
         const { email,otp } = req.body;
         const OTPValue = await OTP.findOne({emailVerify:otp})
-        if(OTPValue == otp){
+        console.log({OTPValue,otp})
+        if(OTPValue?.emailVerify === otp){
             await OTP.updateOne({email:email},{emailVerify:true})
             res.status(200).json({
                 msg: "Email verified"
@@ -130,7 +137,9 @@ router.post(
             const payload = {
                 email: user.email,
             };
-            sendEmail(email,generateOTP());
+            let otp = generateOTP();
+            sendEmail(email,otp);
+            await OTP.updateOne({email:email},{emailVerify:otp});
             res.status(200).json({
                 msg: "Email sent",
             });
