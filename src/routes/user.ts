@@ -77,4 +77,44 @@ router.post(
     }
 )
 
+router.post(
+    "/send",
+    [
+        check("email").isEmail(),
+    ],
+    async (req: Request, res: Response) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        const { email } = req.body;
+        try {
+            let user: IUser = await User.findOne({ email });
+            if (!user) {
+                return res.status(404).json({ msg: "User not found" });
+            }
+            console.log(user)
+      
+            user.update(
+                {email: email},
+                {$set: req.body},
+                (err: any,User:any) => {
+                    if (err) {
+                        return res.status(500).json({ msg: "Server error" });
+                    }
+                    res.status(200).json({
+                        msg: "User updated",
+                    });
+                }
+            );
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send("Server Error");
+        }
+    }
+)
+
+
+
+
 export default router;
